@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a1724">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="庭とジム">
+<title>庭とジム</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500&display=swap">
+<style>
+:root{--bg:#1a1724;--panel:#262233;--panel-2:#332d42;--line:#433b55;--ink:#ece4d6;--muted:#a69db4;--gold:#e0ad5e;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN",sans-serif;line-height:1.6;-webkit-text-size-adjust:100%}
+main{max-width:480px;margin:0 auto;padding:max(24px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+h1{font-family:"DotGothic16",monospace;font-weight:400;font-size:24px;margin:8px 0 2px}
+.lead{color:var(--muted);font-size:13px;margin:0 0 18px}
+a.app{display:flex;gap:14px;align-items:center;background:var(--panel);border-radius:18px;padding:14px;margin-bottom:12px;color:inherit;text-decoration:none;border:1px solid transparent}
+a.app:active{border-color:var(--gold)}
+a.app img{width:64px;height:64px;border-radius:14px;image-rendering:pixelated;flex:none}
+.nm{font-family:"DotGothic16",monospace;font-size:20px}
+.st{font-size:13px;color:var(--muted)}
+.st b{color:var(--gold);font-weight:500}
+details{background:var(--panel);border-radius:14px;padding:12px 14px;margin-top:18px;font-size:13px;color:var(--muted)}
+summary{color:var(--ink);cursor:pointer}
+ol{padding-left:20px;margin:8px 0}
+li{margin:4px 0}
+.note{font-size:12px;color:var(--muted);margin-top:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>庭とジム</h1>
+<p class="lead">ねむりの庭とマッチョクラブの入口です。ここから開くと、ねむりの庭の今朝の睡眠が、マッチョクラブの試合のコンディションに効きます。</p>
+
+<a class="app" href="/nemuri-garden/">
+  <img src="/nemuri-garden/icons/icon-192.png" alt="">
+  <div><div class="nm">ねむりの庭</div><div class="st" id="s-nemuri">よく寝るほど、日本庭園が育つ</div></div>
+</a>
+<a class="app" href="/kintore/">
+  <img src="/kintore/icons/icon-192.png" alt="">
+  <div><div class="nm">マッチョクラブ</div><div class="st" id="s-kintore">筋トレで、分身のボクサーが鍛わる</div></div>
+</a>
+
+<details id="move">
+  <summary>はじめに一度だけ：記録の引っ越し</summary>
+  <p>前に別々のアイコンで使っていた記録は、こちらに移すまで見えません。アプリごとに1回ずつ：</p>
+  <ol>
+    <li><b>前のアイコン</b>（ねむりの庭）を開き、設定 →「書き出す」→「ファイルに保存」</li>
+    <li><b>この入口</b>から「ねむりの庭」を開き、設定 →「読み込む」→ さっきのファイル</li>
+    <li>マッチョクラブも同じように（記録帳 → 設定 → 書き出す／読み込む）</li>
+    <li>移せたら、前のアイコンは消して、この入口だけを使う</li>
+  </ol>
+</details>
+<p class="note" id="install">iPhone の Safari でこのページを開き、共有ボタン →「ホーム画面に追加」すると、入口がアイコンになります。</p>
+</main>
+<script>
+// それぞれのアプリの記録を読むだけ（書かない）。同じ保存場所にあるときだけ出る
+const pad = n => String(n).padStart(2, '0');
+const dayId = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const today = dayId(new Date());
+const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } };
+const fmtH = h => { const m = Math.round(h * 60); return Math.floor(m / 60) + '時間' + (m % 60 ? (m % 60) + '分' : ''); };
+const n = read('nemuri-garden');
+if (n && Array.isArray(n.nights)) {
+  const last = [...n.nights].reverse().find(x => x && x.id === today);
+  document.getElementById('s-nemuri').innerHTML = n.sleeping ? 'おやすみ中' : last ? `今朝 <b>${fmtH((last.wake - last.bed) / 3600000)}</b>` : '今朝の記録はまだ';
+}
+const k = read('kintore');
+if (k && Array.isArray(k.sessions)) {
+  const d = new Date(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const mon = dayId(d);
+  const done = k.sessions.filter(s => s.done && s.sets && s.sets.length && s.id >= mon && s.id <= today);
+  const goal = Math.max(1, Math.min(7, Number(k.settings && k.settings.weeklyGoal) || 3));
+  document.getElementById('s-kintore').innerHTML = `今週 <b>${done.length} / ${goal}回</b>` + (done.some(s => s.id === today) ? '・今日は記録済み' : '');
+}
+// ホーム画面から開いているときは、追加の説明を出さない
+if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.getElementById('install').hidden = true;
+// どちらかの記録がもうここにあれば、引っ越しの説明はたたんだまま
+if (!n && !k) document.getElementById('move').open = true;
+// オフライン用
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {}));
+</script>
+</body>
+</html>

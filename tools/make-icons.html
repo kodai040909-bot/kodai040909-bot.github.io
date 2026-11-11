@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>庭とジム アイコンを作る</title>
+<style>body{background:#1a1724;color:#ece4d6;font:14px/1.6 system-ui,sans-serif;padding:16px}canvas{image-rendering:pixelated;border-radius:22%;margin:6px}</style>
+</head>
+<body>
+<p>ねむりの庭とマッチョクラブのアイコンを、ななめに半分ずつ合わせます。<code>?save=1</code> で icons/ に保存（tools/serve-all.py のときだけ）。</p>
+<div id="list"></div>
+<script type="module">
+const load = src => new Promise((ok, ng) => { const i = new Image(); i.onload = () => ok(i); i.onerror = ng; i.src = src; });
+const [a, b] = await Promise.all([load('/nemuri-garden/icons/icon-512.png'), load('/kintore/icons/icon-512.png')]);
+// グローブは右下の三角に収まるよう、小さくして右下に寄せる
+const b2 = document.createElement('canvas'); b2.width = b2.height = 512;
+{ const g = b2.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = '#2a2330'; g.fillRect(0, 0, 512, 512); g.drawImage(b, 0, 0, 512, 512, 176, 176, 352, 352); }
+// 32 マスで考える：左上の三角はねむりの庭、右下の三角はマッチョクラブ。境目に 1 マスの線
+function render(size, pad) {
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  g.fillStyle = '#1a1724'; g.fillRect(0, 0, size, size);
+  const s = size - pad * 2, u = s / 32;
+  for (let j = 0; j < 32; j++) for (let i = 0; i < 32; i++) {
+    const src = i + j < 31 ? a : i + j > 31 ? b2 : null;
+    if (!src) { g.fillStyle = '#e0ad5e'; g.fillRect(pad + i * u, pad + j * u, Math.ceil(u), Math.ceil(u)); continue; }
+    g.drawImage(src, i * 16, j * 16, 16, 16, pad + i * u, pad + j * u, Math.ceil(u), Math.ceil(u));
+  }
+  return c;
+}
+const SIZES = [['apple-touch-icon-180.png', 180, 0], ['icon-192.png', 192, 0], ['icon-512.png', 512, 0], ['icon-maskable-512.png', 512, 64]];
+const save = new URLSearchParams(location.search).has('save');
+for (const [name, size, pad] of SIZES) {
+  const c = render(size, pad); c.style.width = c.style.height = '120px'; document.getElementById('list').append(c);
+  if (save) await fetch('/icons/' + name, { method: 'PUT', body: await new Promise(r => c.toBlob(r, 'image/png')) });
+}
+if (save) document.title = 'saved';
+</script>
+</body>
+</html>
